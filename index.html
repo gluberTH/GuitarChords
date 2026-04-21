@@ -120,7 +120,7 @@
 
   <header>
     <span>🎸 Chord Vibe</span>
-    <button class="theme-toggle" id="themeBtn">Включить ночь</button>
+    <button class="theme-toggle" id="themeBtn">🌙</button>
   </header>
 
   <div class="chord-slider" id="slider">
@@ -229,7 +229,7 @@
           <div class="canvas-container">
             <canvas class="chord-canvas" width="150" height="220"></canvas>
           </div>
-          ${index === 0 ? '<div class="swipe-hint">Свайпай влево ➡️</div>' : '<div class="swipe-hint">&nbsp;</div>'}
+          ${index === 0 ? '<div class="swipe-hint">Swipe to left ⬅️</div>' : '<div class="swipe-hint">&nbsp;</div>'}
         </div>
       `;
       slider.appendChild(card);
@@ -243,7 +243,7 @@
     
     if (localStorage.getItem('theme') === 'dark') {
       document.body.setAttribute('data-theme', 'dark');
-      themeBtn.textContent = 'Включить день';
+      themeBtn.textContent = '☀️';
     }
 
     themeBtn.addEventListener('click', () => {
@@ -251,11 +251,11 @@
       if (isDark) {
         document.body.removeAttribute('data-theme');
         localStorage.setItem('theme', 'light');
-        themeBtn.textContent = 'Включить ночь';
+        themeBtn.textContent = '🌙';
       } else {
         document.body.setAttribute('data-theme', 'dark');
         localStorage.setItem('theme', 'dark');
-        themeBtn.textContent = 'Включить день';
+        themeBtn.textContent = '☀️';
       }
       // Обязательно перерисовываем канвасы с новыми цветами темы
       renderAllCanvas();
