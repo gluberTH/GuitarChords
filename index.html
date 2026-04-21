@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Chord Vibe</title>
+  <style>
+    /* 1. Настройка цветовых тем (Светлая по умолчанию) */
+    :root {
+      --bg-color: #f4f4f9;
+      --text-color: #2b2b2b;
+      --card-bg: #ffffff;
+      --accent-color: #ff5722;
+    }
+
+    /* Темная тема */
+    [data-theme="dark"] {
+      --bg-color: #1a1a2e;
+      --text-color: #e0e0e0;
+      --card-bg: #16213e;
+      --accent-color: #e94560;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      transition: background-color 0.3s, color 0.3s;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden; /* Запрещаем вертикальный скролл страницы */
+    }
+
+    /* Шапка с кнопкой темы */
+    header {
+      padding: 15px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: bold;
+      font-size: 20px;
+    }
+
+    .theme-toggle {
+      background: none;
+      border: 2px solid var(--text-color);
+      color: var(--text-color);
+      padding: 5px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.3s;
+    }
+
+    /* 2. Магия быстрого листания (CSS Scroll Snap) */
+    .chord-slider {
+      flex: 1;
+      display: flex;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory; /* Включаем примагничивание */
+      scrollbar-width: none; /* Прячем скроллбар в Firefox */
+    }
+    .chord-slider::-webkit-scrollbar {
+      display: none; /* Прячем скроллбар в Chrome/Safari */
+    }
+
+    /* Карточка аккорда (ровно на один экран) */
+    .chord-card {
+      min-width: 100vw; /* Занимает всю ширину экрана */
+      scroll-snap-align: center; /* Магнитится по центру */
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .chord-content {
+      background-color: var(--card-bg);
+      width: 80%;
+      max-width: 350px;
+      aspect-ratio: 2 / 3;
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: background-color 0.3s;
+    }
+
+    .chord-name {
+      font-size: 48px;
+      font-weight: bold;
+      color: var(--accent-color);
+      margin-bottom: 20px;
+    }
+
+    /* Плейсхолдер для сетки (грифа) */
+    .chord-grid-placeholder {
+      font-size: 18px;
+      color: var(--text-color);
+      opacity: 0.7;
+      text-align: center;
+    }
+    
+    .swipe-hint {
+      margin-top: 20px;
+      font-size: 12px;
+      opacity: 0.5;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <span>🎸 Chord Vibe</span>
+    <button class="theme-toggle" id="themeBtn">Включить ночь</button>
+  </header>
+
+  <div class="chord-slider" id="slider">
+    </div>
+
+  <script>
+    // 1. Логика переключения темы
+    const themeBtn = document.getElementById('themeBtn');
+    
+    // Проверяем, есть ли сохраненная тема
+    if (localStorage.getItem('theme') === 'dark') {
+      document.body.setAttribute('data-theme', 'dark');
+      themeBtn.textContent = 'Включить день';
+    }
+
+    themeBtn.addEventListener('click', () => {
+      const isDark = document.body.getAttribute('data-theme') === 'dark';
+      if (isDark) {
+        document.body.removeAttribute('data-theme');
+        localStorage.setItem('theme', 'light');
+        themeBtn.textContent = 'Включить ночь';
+      } else {
+        document.body.setAttribute('data-theme', 'dark');
+        localStorage.setItem('theme', 'dark');
+        themeBtn.textContent = 'Включить день';
+      }
+    });
+
+    // 2. Наши данные (Каталог аккордов)
+    const chords = [
+      { name: "C Major", frets: "x 3 2 0 1 0" },
+      { name: "A Minor", frets: "x 0 2 2 1 0" },
+      { name: "G Major", frets: "3 2 0 0 0 3" },
+      { name: "F Major", frets: "1 3 3 2 1 1" },
+      { name: "E Minor", frets: "0 2 2 0 0 0" }
+    ];
+
+    // 3. Отрисовка карточек
+    const slider = document.getElementById('slider');
+    
+    chords.forEach((chord, index) => {
+      const card = document.createElement('div');
+      card.className = 'chord-card';
+      
+      card.innerHTML = `
+        <div class="chord-content">
+          <div class="chord-name">${chord.name}</div>
+          <div class="chord-grid-placeholder">
+            Табы:<br>
+            <strong>${chord.frets}</strong>
+          </div>
+          ${index === 0 ? '<div class="swipe-hint">Свайпай влево ➡️</div>' : ''}
+        </div>
+      `;
+      slider.appendChild(card);
+    });
+  </script>
+
+</body>
+</html>
