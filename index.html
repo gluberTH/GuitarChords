@@ -350,57 +350,86 @@ function drawChordOnCanvas(canvas, fretsStr) {
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
 
-  // !!! Увеличиваем отступ слева, чтобы поместились цифры
-  const startX = 30; // Было 25
+  const startX = 35; // Чуть увеличили отступ для надписей вроде "10fr"
   const startY = 40;
   const stringSpacing = 20;
   const fretSpacing = 30;
   const numStrings = 6;
-  // Увеличиваем количество ладов для примера, 
-  // чтобы 5-ый лад тоже был виден
-  const numFrets = 7; 
+  const displayFrets = 5; // Сколько ладов показываем в "окне"
 
-  // Рисуем верхний порожек (нулевой лад)
-  ctx.lineWidth = 4;
+  // 1. АНАЛИЗ АККОРДА: ищем минимальный и максимальный лад
+  const notes = fretsStr.split(' ');
+  let minFret = 99;
+  let maxFret = 0;
+  let hasOpenStrings = false;
+
+  notes.forEach(note => {
+    const fretNum = parseInt(note);
+    if (!isNaN(fretNum)) {
+      if (fretNum === 0) hasOpenStrings = true;
+      if (fretNum > 0) {
+        if (fretNum < minFret) minFret = fretNum;
+        if (fretNum > maxFret) maxFret = fretNum;
+      }
+    }
+  });
+
+  // Если аккорд пустой (например, все x), ставим дефолт
+  if (minFret === 99) minFret = 1;
+
+  // 2. ВЫЧИСЛЯЕМ СТАРТОВЫЙ ЛАД ОТОБРАЖЕНИЯ
+  // Если максимальный лад больше 5, и нет открытых струн - сдвигаем окно
+  let startFret = 1;
+  if (maxFret > 5 && minFret > 1 && !hasOpenStrings) {
+    startFret = minFret;
+  }
+
+  // 3. ОТРИСОВКА СЕТКИ
+  // Верхний порожек (толстый, если это нулевой лад, и обычный, если мы сдвинулись по грифу)
+  ctx.lineWidth = (startFret === 1) ? 4 : 2;
   ctx.beginPath();
   ctx.moveTo(startX, startY);
   ctx.lineTo(startX + (numStrings - 1) * stringSpacing, startY);
   ctx.stroke();
 
-  // Рисуем лады (горизонтальные линии)
+  // Лады (горизонтальные линии)
   ctx.lineWidth = 2;
-  for (let i = 1; i <= numFrets; i++) {
+  for (let i = 1; i <= displayFrets; i++) {
     ctx.beginPath();
     ctx.moveTo(startX, startY + i * fretSpacing);
     ctx.lineTo(startX + (numStrings - 1) * stringSpacing, startY + i * fretSpacing);
     ctx.stroke();
   }
 
-  // !!! ДОБАВЛЕННЫЙ БЛОК: Отрисовка номеров ладов слева
-  ctx.textAlign = 'right'; // Выравниваем текст по правому краю
-  // Мы хотим подписать 1, 3 и 5 лады
-  const fretsToLabel = [1, 3, 5];
-  for (let fret of fretsToLabel) {
-    // Проверяем, что лад попадает в видимую область
-    if (fret <= numFrets) {
-      // Вычисляем Y-координату: Y порожка + (номер лада - 0.5) * высоту лада
-      const y = startY + (fret - 0.5) * fretSpacing;
-      // Рисуем текст с небольшим отступом влево от сетки
-      ctx.fillText(`${fret}`, startX - 10, y);
-    }
-  }
-  // Возвращаем выравнивание по умолчанию для точек
-  ctx.textAlign = 'center'; 
-
-  // Рисуем струны (вертикальные линии)
+  // Струны (вертикальные линии)
   for (let i = 0; i < numStrings; i++) {
     ctx.beginPath();
     ctx.moveTo(startX + i * stringSpacing, startY);
-    ctx.lineTo(startX + i * stringSpacing, startY + numFrets * fretSpacing);
+    ctx.lineTo(startX + i * stringSpacing, startY + displayFrets * fretSpacing);
     ctx.stroke();
   }
 
-  const notes = fretsStr.split(' ');
+  // 4. ПОДПИСИ ЛАДОВ СЛЕВА
+  ctx.textAlign = 'right';
+  if (startFret === 1) {
+    // Стандартные подписи для открытых аккордов (1, 3, 5 лад)
+    const fretsToLabel = [1, 3, 5];
+    for (let fret of fretsToLabel) {
+      if (fret <= displayFrets) {
+        const y = startY + (fret - 0.5) * fretSpacing;
+        ctx.fillText(`${fret}`, startX - 10, y);
+      }
+    }
+  } else {
+    // Если аккорд далеко на грифе, пишем только стартовый лад (например, "6fr")
+    const y = startY + 0.5 * fretSpacing;
+    ctx.font = 'bold 14px sans-serif'; // Чуть уменьшаем шрифт для приставки fr
+    ctx.fillText(`${startFret}fr`, startX - 8, y);
+    ctx.font = 'bold 16px sans-serif'; // Возвращаем стандартный шрифт
+  }
+  ctx.textAlign = 'center';
+
+  // 5. ОТРИСОВКА ТОЧЕК И КРЕСТИКОВ
   for (let i = 0; i < numStrings; i++) {
     const note = notes[i].toLowerCase();
     const x = startX + i * stringSpacing;
@@ -414,10 +443,16 @@ function drawChordOnCanvas(canvas, fretsStr) {
     } else {
       const fretNum = parseInt(note);
       if (!isNaN(fretNum) && fretNum > 0) {
-        const y = startY + (fretNum - 0.5) * fretSpacing;
-        ctx.beginPath();
-        ctx.arc(x, y, 7, 0, Math.PI * 2);
-        ctx.fill();
+        // Вычисляем относительную позицию точки с учетом стартового лада
+        const relativeFret = fretNum - startFret + 1;
+        
+        // Рисуем точку только если она попадает в наше "окно" из 5 ладов
+        if (relativeFret >= 1 && relativeFret <= displayFrets) {
+          const y = startY + (relativeFret - 0.5) * fretSpacing;
+          ctx.beginPath();
+          ctx.arc(x, y, 7, 0, Math.PI * 2);
+          ctx.fill();
+        }
       }
     }
   }
