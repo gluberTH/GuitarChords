@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Chord Vibe</title>
   <style>
-    /* 1. Настройка цветовых тем (Светлая по умолчанию) */
+    /* Настройка цветовых тем */
     :root {
       --bg-color: #f4f4f9;
       --text-color: #2b2b2b;
@@ -13,7 +13,6 @@
       --accent-color: #ff5722;
     }
 
-    /* Темная тема */
     [data-theme="dark"] {
       --bg-color: #1a1a2e;
       --text-color: #e0e0e0;
@@ -35,10 +34,9 @@
       display: flex;
       flex-direction: column;
       height: 100vh;
-      overflow: hidden; /* Запрещаем вертикальный скролл страницы */
+      overflow: hidden;
     }
 
-    /* Шапка с кнопкой темы */
     header {
       padding: 15px 20px;
       display: flex;
@@ -59,22 +57,20 @@
       transition: all 0.3s;
     }
 
-    /* 2. Магия быстрого листания (CSS Scroll Snap) */
     .chord-slider {
       flex: 1;
       display: flex;
       overflow-x: auto;
-      scroll-snap-type: x mandatory; /* Включаем примагничивание */
-      scrollbar-width: none; /* Прячем скроллбар в Firefox */
+      scroll-snap-type: x mandatory;
+      scrollbar-width: none;
     }
     .chord-slider::-webkit-scrollbar {
-      display: none; /* Прячем скроллбар в Chrome/Safari */
+      display: none;
     }
 
-    /* Карточка аккорда (ровно на один экран) */
     .chord-card {
-      min-width: 100vw; /* Занимает всю ширину экрана */
-      scroll-snap-align: center; /* Магнитится по центру */
+      min-width: 100vw;
+      scroll-snap-align: center;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -94,25 +90,27 @@
       align-items: center;
       justify-content: center;
       transition: background-color 0.3s;
+      position: relative;
     }
 
     .chord-name {
-      font-size: 48px;
+      font-size: 42px;
       font-weight: bold;
       color: var(--accent-color);
-      margin-bottom: 20px;
+      margin-bottom: 10px;
+      margin-top: 20px;
     }
 
-    /* Плейсхолдер для сетки (грифа) */
-    .chord-grid-placeholder {
-      font-size: 18px;
-      color: var(--text-color);
-      opacity: 0.7;
-      text-align: center;
+    .canvas-container {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
     }
-    
+
     .swipe-hint {
-      margin-top: 20px;
+      margin-bottom: 20px;
       font-size: 12px;
       opacity: 0.5;
     }
@@ -129,10 +127,120 @@
     </div>
 
   <script>
-    // 1. Логика переключения темы
+    // 1. Наши данные (Массив аккордов)
+    const chords = [
+      { name: "C Major", frets: "x 3 2 0 1 0" },
+      { name: "A Minor", frets: "x 0 2 2 1 0" },
+      { name: "G Major", frets: "3 2 0 0 0 3" },
+      { name: "F Major", frets: "1 3 3 2 1 1" },
+      { name: "E Minor", frets: "0 2 2 0 0 0" }
+    ];
+
+    // 2. Функция отрисовки аккорда на Canvas
+    function drawChordOnCanvas(canvas, fretsStr) {
+      const ctx = canvas.getContext('2d');
+      // Берем цвет текста в зависимости от текущей темы
+      const isDark = document.body.getAttribute('data-theme') === 'dark';
+      const drawColor = isDark ? '#e0e0e0' : '#2b2b2b';
+      
+      // Очищаем холст перед перерисовкой
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      ctx.strokeStyle = drawColor;
+      ctx.fillStyle = drawColor;
+      ctx.font = 'bold 16px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+
+      const startX = 25;
+      const startY = 40;
+      const stringSpacing = 20;
+      const fretSpacing = 30;
+      const numStrings = 6;
+      const numFrets = 5;
+
+      // Рисуем верхний порожек (жирная линия)
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(startX, startY);
+      ctx.lineTo(startX + (numStrings - 1) * stringSpacing, startY);
+      ctx.stroke();
+
+      // Рисуем лады (горизонтальные линии)
+      ctx.lineWidth = 2;
+      for (let i = 1; i <= numFrets; i++) {
+        ctx.beginPath();
+        ctx.moveTo(startX, startY + i * fretSpacing);
+        ctx.lineTo(startX + (numStrings - 1) * stringSpacing, startY + i * fretSpacing);
+        ctx.stroke();
+      }
+
+      // Рисуем струны (вертикальные линии)
+      for (let i = 0; i < numStrings; i++) {
+        ctx.beginPath();
+        ctx.moveTo(startX + i * stringSpacing, startY);
+        ctx.lineTo(startX + i * stringSpacing, startY + numFrets * fretSpacing);
+        ctx.stroke();
+      }
+
+      // Парсим строку аккорда и расставляем точки/крестики
+      const notes = fretsStr.split(' ');
+      for (let i = 0; i < numStrings; i++) {
+        const note = notes[i].toLowerCase();
+        const x = startX + i * stringSpacing;
+        
+        if (note === 'x') {
+          // Крестик - приглушенная струна
+          ctx.fillText('x', x, startY - 15);
+        } else if (note === '0' || note === 'o') {
+          // Нолик - открытая струна
+          ctx.beginPath();
+          ctx.arc(x, startY - 15, 4, 0, Math.PI * 2);
+          ctx.stroke();
+        } else {
+          // Точка - зажатый лад
+          const fretNum = parseInt(note);
+          if (!isNaN(fretNum) && fretNum > 0) {
+            const y = startY + (fretNum - 0.5) * fretSpacing;
+            ctx.beginPath();
+            ctx.arc(x, y, 7, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+      }
+    }
+
+    // Обертка для перерисовки всех канвасов (нужна при смене темы)
+    function renderAllCanvas() {
+      document.querySelectorAll('.chord-canvas').forEach((canvas, index) => {
+        drawChordOnCanvas(canvas, chords[index].frets);
+      });
+    }
+
+    // 3. Создаем карточки в DOM
+    const slider = document.getElementById('slider');
+    chords.forEach((chord, index) => {
+      const card = document.createElement('div');
+      card.className = 'chord-card';
+      
+      card.innerHTML = `
+        <div class="chord-content">
+          <div class="chord-name">${chord.name}</div>
+          <div class="canvas-container">
+            <canvas class="chord-canvas" width="150" height="220"></canvas>
+          </div>
+          ${index === 0 ? '<div class="swipe-hint">Свайпай влево ➡️</div>' : '<div class="swipe-hint">&nbsp;</div>'}
+        </div>
+      `;
+      slider.appendChild(card);
+    });
+
+    // Рисуем графику после создания элементов
+    renderAllCanvas();
+
+    // 4. Логика переключения темы
     const themeBtn = document.getElementById('themeBtn');
     
-    // Проверяем, есть ли сохраненная тема
     if (localStorage.getItem('theme') === 'dark') {
       document.body.setAttribute('data-theme', 'dark');
       themeBtn.textContent = 'Включить день';
@@ -149,35 +257,8 @@
         localStorage.setItem('theme', 'dark');
         themeBtn.textContent = 'Включить день';
       }
-    });
-
-    // 2. Наши данные (Каталог аккордов)
-    const chords = [
-      { name: "C Major", frets: "x 3 2 0 1 0" },
-      { name: "A Minor", frets: "x 0 2 2 1 0" },
-      { name: "G Major", frets: "3 2 0 0 0 3" },
-      { name: "F Major", frets: "1 3 3 2 1 1" },
-      { name: "E Minor", frets: "0 2 2 0 0 0" }
-    ];
-
-    // 3. Отрисовка карточек
-    const slider = document.getElementById('slider');
-    
-    chords.forEach((chord, index) => {
-      const card = document.createElement('div');
-      card.className = 'chord-card';
-      
-      card.innerHTML = `
-        <div class="chord-content">
-          <div class="chord-name">${chord.name}</div>
-          <div class="chord-grid-placeholder">
-            Табы:<br>
-            <strong>${chord.frets}</strong>
-          </div>
-          ${index === 0 ? '<div class="swipe-hint">Свайпай влево ➡️</div>' : ''}
-        </div>
-      `;
-      slider.appendChild(card);
+      // Обязательно перерисовываем канвасы с новыми цветами темы
+      renderAllCanvas();
     });
   </script>
 
