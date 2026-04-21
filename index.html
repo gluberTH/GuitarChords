@@ -280,69 +280,92 @@
 ];
 
     // 2. Функция отрисовки аккорда на Canvas
-    function drawChordOnCanvas(canvas, fretsStr) {
-      const ctx = canvas.getContext('2d');
-      const isDark = document.body.getAttribute('data-theme') === 'dark';
-      const drawColor = isDark ? '#e0e0e0' : '#2b2b2b';
-      
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      
-      ctx.strokeStyle = drawColor;
-      ctx.fillStyle = drawColor;
-      ctx.font = 'bold 16px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
+    // 2. Функция отрисовки аккорда на Canvas
+function drawChordOnCanvas(canvas, fretsStr) {
+  const ctx = canvas.getContext('2d');
+  const isDark = document.body.getAttribute('data-theme') === 'dark';
+  const drawColor = isDark ? '#e0e0e0' : '#2b2b2b';
+  
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  ctx.strokeStyle = drawColor;
+  ctx.fillStyle = drawColor;
+  ctx.font = 'bold 16px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
 
-      const startX = 25;
-      const startY = 40;
-      const stringSpacing = 20;
-      const fretSpacing = 30;
-      const numStrings = 6;
-      const numFrets = 7;
+  // !!! Увеличиваем отступ слева, чтобы поместились цифры
+  const startX = 50; // Было 25
+  const startY = 40;
+  const stringSpacing = 20;
+  const fretSpacing = 30;
+  const numStrings = 6;
+  // Увеличиваем количество ладов для примера, 
+  // чтобы 5-ый лад тоже был виден
+  const numFrets = 7; 
 
-      ctx.lineWidth = 4;
+  // Рисуем верхний порожек (нулевой лад)
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(startX, startY);
+  ctx.lineTo(startX + (numStrings - 1) * stringSpacing, startY);
+  ctx.stroke();
+
+  // Рисуем лады (горизонтальные линии)
+  ctx.lineWidth = 2;
+  for (let i = 1; i <= numFrets; i++) {
+    ctx.beginPath();
+    ctx.moveTo(startX, startY + i * fretSpacing);
+    ctx.lineTo(startX + (numStrings - 1) * stringSpacing, startY + i * fretSpacing);
+    ctx.stroke();
+  }
+
+  // !!! ДОБАВЛЕННЫЙ БЛОК: Отрисовка номеров ладов слева
+  ctx.textAlign = 'right'; // Выравниваем текст по правому краю
+  // Мы хотим подписать 1, 3 и 5 лады
+  const fretsToLabel = [1, 3, 5];
+  for (let fret of fretsToLabel) {
+    // Проверяем, что лад попадает в видимую область
+    if (fret <= numFrets) {
+      // Вычисляем Y-координату: Y порожка + (номер лада - 0.5) * высоту лада
+      const y = startY + (fret - 0.5) * fretSpacing;
+      // Рисуем текст с небольшим отступом влево от сетки
+      ctx.fillText(`${fret}ый`, startX - 10, y);
+    }
+  }
+  // Возвращаем выравнивание по умолчанию для точек
+  ctx.textAlign = 'center'; 
+
+  // Рисуем струны (вертикальные линии)
+  for (let i = 0; i < numStrings; i++) {
+    ctx.beginPath();
+    ctx.moveTo(startX + i * stringSpacing, startY);
+    ctx.lineTo(startX + i * stringSpacing, startY + numFrets * fretSpacing);
+    ctx.stroke();
+  }
+
+  const notes = fretsStr.split(' ');
+  for (let i = 0; i < numStrings; i++) {
+    const note = notes[i].toLowerCase();
+    const x = startX + i * stringSpacing;
+    
+    if (note === 'x') {
+      ctx.fillText('x', x, startY - 15);
+    } else if (note === '0' || note === 'o') {
       ctx.beginPath();
-      ctx.moveTo(startX, startY);
-      ctx.lineTo(startX + (numStrings - 1) * stringSpacing, startY);
+      ctx.arc(x, startY - 15, 4, 0, Math.PI * 2);
       ctx.stroke();
-
-      ctx.lineWidth = 2;
-      for (let i = 1; i <= numFrets; i++) {
+    } else {
+      const fretNum = parseInt(note);
+      if (!isNaN(fretNum) && fretNum > 0) {
+        const y = startY + (fretNum - 0.5) * fretSpacing;
         ctx.beginPath();
-        ctx.moveTo(startX, startY + i * fretSpacing);
-        ctx.lineTo(startX + (numStrings - 1) * stringSpacing, startY + i * fretSpacing);
-        ctx.stroke();
-      }
-
-      for (let i = 0; i < numStrings; i++) {
-        ctx.beginPath();
-        ctx.moveTo(startX + i * stringSpacing, startY);
-        ctx.lineTo(startX + i * stringSpacing, startY + numFrets * fretSpacing);
-        ctx.stroke();
-      }
-
-      const notes = fretsStr.split(' ');
-      for (let i = 0; i < numStrings; i++) {
-        const note = notes[i].toLowerCase();
-        const x = startX + i * stringSpacing;
-        
-        if (note === 'x') {
-          ctx.fillText('x', x, startY - 15);
-        } else if (note === '0' || note === 'o') {
-          ctx.beginPath();
-          ctx.arc(x, startY - 15, 4, 0, Math.PI * 2);
-          ctx.stroke();
-        } else {
-          const fretNum = parseInt(note);
-          if (!isNaN(fretNum) && fretNum > 0) {
-            const y = startY + (fretNum - 0.5) * fretSpacing;
-            ctx.beginPath();
-            ctx.arc(x, y, 7, 0, Math.PI * 2);
-            ctx.fill();
-          }
-        }
+        ctx.arc(x, y, 7, 0, Math.PI * 2);
+        ctx.fill();
       }
     }
+  }
+}
 
     // 3. Логика фильтров и создания карточек
     let currentRoot = 'all';
