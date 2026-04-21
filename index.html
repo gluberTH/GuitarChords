@@ -1,9 +1,25 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
+<meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Chord Vibe</title>
+  
+  <title>Chord Vibe — Каталог гитарных аккордов</title>
+  <meta name="description" content="Удобный мобильный справочник гитарных аккордов. Изучай аппликатуры и играй с комфортом.">
+
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://gluberth.github.io/GuitarChords/">
+  <meta property="og:title" content="Chord Vibe — Каталог гитарных аккордов">
+  <meta property="og:description" content="Удобный мобильный справочник гитарных аккордов. Изучай аппликатуры и играй с комфортом.">
+  <meta property="og:image" content="https://MyFitTrainingPlan.com/social-preview-guitar.jpg">
+
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:url" content="https://gluberth.github.io/GuitarChords/">
+  <meta property="twitter:title" content="Chord Vibe — Каталог гитарных аккордов">
+  <meta property="twitter:description" content="Удобный мобильный справочник гитарных аккордов. Изучай аппликатуры и играй с комфортом.">
+  <meta property="twitter:image" content="https://MyFitTrainingPlan.com/social-preview-guitar.jpg">
+  <link rel="icon" type="image/png" href="https://MyFitTrainingPlan.com/logoGuitar.jpg">
+  <link rel="apple-touch-icon" href="https://MyFitTrainingPlan.com/logoGuitar.jpg">
   <style>
     /* Настройка цветовых тем */
     :root {
@@ -24,6 +40,13 @@
       box-sizing: border-box;
       margin: 0;
       padding: 0;
+      /* Запрет выделения текста для мобильных устройств */
+      -webkit-user-select: none; /* Safari */
+      -moz-user-select: none;    /* Firefox */
+      -ms-user-select: none;     /* IE 10+ и Edge */
+      user-select: none;         /* Стандартный синтаксис */
+      /* Убираем подсветку при клике (тапе) на мобилках */
+      -webkit-tap-highlight-color: transparent; 
     }
 
     body {
@@ -114,6 +137,36 @@
       font-size: 12px;
       opacity: 0.5;
     }
+    .filters {
+      padding: 10px 20px;
+      background-color: var(--bg-color);
+      z-index: 10;
+    }
+    .filter-row {
+      display: flex;
+      overflow-x: auto;
+      gap: 10px;
+      margin-bottom: 10px;
+      scrollbar-width: none; /* Прячем скроллбар */
+    }
+    .filter-row::-webkit-scrollbar { display: none; }
+    
+    .filter-pill {
+      background-color: var(--card-bg);
+      color: var(--text-color);
+      border: 1px solid var(--text-color);
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 14px;
+      cursor: pointer;
+      white-space: nowrap; /* Чтобы текст не переносился */
+      transition: all 0.2s;
+    }
+    .filter-pill.active {
+      background-color: var(--accent-color);
+      color: white;
+      border-color: var(--accent-color);
+    }
   </style>
 </head>
 <body>
@@ -122,28 +175,59 @@
     <span>🎸 Chord Vibe</span>
     <button class="theme-toggle" id="themeBtn">🌙</button>
   </header>
-
+  <div class="filters">
+    <div class="filter-row" id="root-filters">
+      <button class="filter-pill active" data-root="all">Все</button>
+      <button class="filter-pill" data-root="C">C</button>
+      <button class="filter-pill" data-root="D">D</button>
+      <button class="filter-pill" data-root="E">E</button>
+      <button class="filter-pill" data-root="F">F</button>
+      <button class="filter-pill" data-root="G">G</button>
+      <button class="filter-pill" data-root="A">A</button>
+      <button class="filter-pill" data-root="B">B</button>
+    </div>
+    <div class="filter-row" id="type-filters">
+      <button class="filter-pill active" data-type="all">Все</button>
+      <button class="filter-pill" data-type="major">Major</button>
+      <button class="filter-pill" data-type="minor">Minor</button>
+      <button class="filter-pill" data-type="7">7th</button>
+    </div>
+  </div>
   <div class="chord-slider" id="slider">
     </div>
 
   <script>
     // 1. Наши данные (Массив аккордов)
     const chords = [
-      { name: "C Major", frets: "x 3 2 0 1 0" },
-      { name: "A Minor", frets: "x 0 2 2 1 0" },
-      { name: "G Major", frets: "3 2 0 0 0 3" },
-      { name: "F Major", frets: "1 3 3 2 1 1" },
-      { name: "E Minor", frets: "0 2 2 0 0 0" }
+      { name: "C Major", type: "major", root: "C", frets: "x 3 2 0 1 0" },
+      { name: "D Major", type: "major", root: "D", frets: "x x 0 2 3 2" },
+      { name: "E Major", type: "major", root: "E", frets: "0 2 2 1 0 0" },
+      { name: "F Major", type: "major", root: "F", frets: "1 3 3 2 1 1" },
+      { name: "G Major", type: "major", root: "G", frets: "3 2 0 0 0 3" },
+      { name: "A Major", type: "major", root: "A", frets: "x 0 2 2 2 0" },
+      { name: "B Major", type: "major", root: "B", frets: "x 2 4 4 4 2" },
+
+      { name: "C Minor", type: "minor", root: "C", frets: "x 3 5 5 4 3" },
+      { name: "D Minor", type: "minor", root: "D", frets: "x x 0 2 3 1" },
+      { name: "E Minor", type: "minor", root: "E", frets: "0 2 2 0 0 0" },
+      { name: "F Minor", type: "minor", root: "F", frets: "1 3 3 1 1 1" },
+      { name: "G Minor", type: "minor", root: "G", frets: "3 5 5 3 3 3" },
+      { name: "A Minor", type: "minor", root: "A", frets: "x 0 2 2 1 0" },
+      { name: "B Minor", type: "minor", root: "B", frets: "x 2 4 4 3 2" },
+
+      { name: "C 7", type: "7", root: "C", frets: "x 3 2 3 1 0" },
+      { name: "D 7", type: "7", root: "D", frets: "x x 0 2 1 2" },
+      { name: "E 7", type: "7", root: "E", frets: "0 2 0 1 0 0" },
+      { name: "G 7", type: "7", root: "G", frets: "3 2 0 0 0 1" },
+      { name: "A 7", type: "7", root: "A", frets: "x 0 2 0 2 0" }
     ];
 
     // 2. Функция отрисовки аккорда на Canvas
     function drawChordOnCanvas(canvas, fretsStr) {
       const ctx = canvas.getContext('2d');
-      // Берем цвет текста в зависимости от текущей темы
       const isDark = document.body.getAttribute('data-theme') === 'dark';
       const drawColor = isDark ? '#e0e0e0' : '#2b2b2b';
       
-      // Очищаем холст перед перерисовкой
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       
       ctx.strokeStyle = drawColor;
@@ -159,14 +243,12 @@
       const numStrings = 6;
       const numFrets = 5;
 
-      // Рисуем верхний порожек (жирная линия)
       ctx.lineWidth = 4;
       ctx.beginPath();
       ctx.moveTo(startX, startY);
       ctx.lineTo(startX + (numStrings - 1) * stringSpacing, startY);
       ctx.stroke();
 
-      // Рисуем лады (горизонтальные линии)
       ctx.lineWidth = 2;
       for (let i = 1; i <= numFrets; i++) {
         ctx.beginPath();
@@ -175,7 +257,6 @@
         ctx.stroke();
       }
 
-      // Рисуем струны (вертикальные линии)
       for (let i = 0; i < numStrings; i++) {
         ctx.beginPath();
         ctx.moveTo(startX + i * stringSpacing, startY);
@@ -183,22 +264,18 @@
         ctx.stroke();
       }
 
-      // Парсим строку аккорда и расставляем точки/крестики
       const notes = fretsStr.split(' ');
       for (let i = 0; i < numStrings; i++) {
         const note = notes[i].toLowerCase();
         const x = startX + i * stringSpacing;
         
         if (note === 'x') {
-          // Крестик - приглушенная струна
           ctx.fillText('x', x, startY - 15);
         } else if (note === '0' || note === 'o') {
-          // Нолик - открытая струна
           ctx.beginPath();
           ctx.arc(x, startY - 15, 4, 0, Math.PI * 2);
           ctx.stroke();
         } else {
-          // Точка - зажатый лад
           const fretNum = parseInt(note);
           if (!isNaN(fretNum) && fretNum > 0) {
             const y = startY + (fretNum - 0.5) * fretSpacing;
@@ -210,33 +287,66 @@
       }
     }
 
-    // Обертка для перерисовки всех канвасов (нужна при смене темы)
-    function renderAllCanvas() {
-      document.querySelectorAll('.chord-canvas').forEach((canvas, index) => {
-        drawChordOnCanvas(canvas, chords[index].frets);
+    // 3. Логика фильтров и создания карточек
+    let currentRoot = 'all';
+    let currentType = 'all';
+    const slider = document.getElementById('slider');
+
+    function renderCards() {
+      slider.innerHTML = ''; 
+      
+      const filteredChords = chords.filter(chord => {
+        const rootMatch = currentRoot === 'all' || chord.root === currentRoot;
+        const typeMatch = currentType === 'all' || chord.type === currentType;
+        return rootMatch && typeMatch;
+      });
+
+      if (filteredChords.length === 0) {
+        slider.innerHTML = '<div style="margin: auto; opacity: 0.5;">Аккорды не найдены 🎸</div>';
+        return;
+      }
+
+      filteredChords.forEach((chord) => {
+        const card = document.createElement('div');
+        card.className = 'chord-card';
+        card.innerHTML = `
+          <div class="chord-content">
+            <div class="chord-name">${chord.name}</div>
+            <div class="canvas-container">
+              <canvas class="chord-canvas" width="150" height="220" data-frets="${chord.frets}"></canvas>
+            </div>
+          </div>
+        `;
+        slider.appendChild(card);
+      });
+
+      // Сразу рисуем графику на свежесозданных канвасах
+      document.querySelectorAll('.chord-canvas').forEach(canvas => {
+        drawChordOnCanvas(canvas, canvas.getAttribute('data-frets'));
       });
     }
 
-    // 3. Создаем карточки в DOM
-    const slider = document.getElementById('slider');
-    chords.forEach((chord, index) => {
-      const card = document.createElement('div');
-      card.className = 'chord-card';
-      
-      card.innerHTML = `
-        <div class="chord-content">
-          <div class="chord-name">${chord.name}</div>
-          <div class="canvas-container">
-            <canvas class="chord-canvas" width="150" height="220"></canvas>
-          </div>
-          ${index === 0 ? '<div class="swipe-hint">Swipe to left ⬅️</div>' : '<div class="swipe-hint">&nbsp;</div>'}
-        </div>
-      `;
-      slider.appendChild(card);
+    // Слушатели кликов для фильтров
+    document.querySelectorAll('.filter-pill').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const target = e.target;
+        const row = target.closest('.filter-row');
+        
+        row.querySelectorAll('.filter-pill').forEach(b => b.classList.remove('active'));
+        target.classList.add('active');
+
+        if (target.hasAttribute('data-root')) {
+          currentRoot = target.getAttribute('data-root');
+        } else if (target.hasAttribute('data-type')) {
+          currentType = target.getAttribute('data-type');
+        }
+
+        renderCards();
+      });
     });
 
-    // Рисуем графику после создания элементов
-    renderAllCanvas();
+    // Первый запуск отрисовки
+    renderCards();
 
     // 4. Логика переключения темы
     const themeBtn = document.getElementById('themeBtn');
@@ -244,6 +354,8 @@
     if (localStorage.getItem('theme') === 'dark') {
       document.body.setAttribute('data-theme', 'dark');
       themeBtn.textContent = '☀️';
+    } else {
+      themeBtn.textContent = '🌙';
     }
 
     themeBtn.addEventListener('click', () => {
@@ -257,8 +369,11 @@
         localStorage.setItem('theme', 'dark');
         themeBtn.textContent = '☀️';
       }
-      // Обязательно перерисовываем канвасы с новыми цветами темы
-      renderAllCanvas();
+      
+      // Перерисовываем графику при смене темы, чтобы поменять цвет линий
+      document.querySelectorAll('.chord-canvas').forEach(canvas => {
+        drawChordOnCanvas(canvas, canvas.getAttribute('data-frets'));
+      });
     });
   </script>
 
