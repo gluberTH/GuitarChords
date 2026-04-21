@@ -330,7 +330,7 @@ function drawChordOnCanvas(canvas, fretsStr) {
       // Вычисляем Y-координату: Y порожка + (номер лада - 0.5) * высоту лада
       const y = startY + (fret - 0.5) * fretSpacing;
       // Рисуем текст с небольшим отступом влево от сетки
-      ctx.fillText(`${fret}ый`, startX - 10, y);
+      ctx.fillText(`${fret}`, startX - 10, y);
     }
   }
   // Возвращаем выравнивание по умолчанию для точек
